@@ -1,0 +1,42 @@
+// Modelo de datos del portfolio con captación de leads.
+// Base: SQLite para desarrollo local (cero configuración).
+// Para producción, cambiá provider a "postgresql" y la DATABASE_URL.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// Un "lead" es un contacto que llegó desde el formulario público.
+model Lead {
+  id           String        @id @default(cuid())
+  createdAt    DateTime      @default(now())
+  name         String
+  company      String?
+  email        String
+  projectDesc  String // descripción del proyecto / necesidad
+  expectedTech String        @default("[]") // JSON string (SQLite no tiene arrays)
+  budget       String?
+  timeline     String?
+  source       String        @default("form")
+  status       String        @default("new") // new | enriching | enriched | error
+  analysis     LeadAnalysis?
+}
+
+// Análisis generado por la IA para un lead (relación 1:1).
+model LeadAnalysis {
+  id                String   @id @default(cuid())
+  createdAt         DateTime @default(now())
+  lead              Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  leadId            String   @unique
+  summary           String // resumen del proyecto
+  technicalAnalysis String // análisis técnico y viabilidad
+  viabilityScore    Int      @default(0) // 0-100
+  recommendedTech   String   @default("[]") // JSON string
+  emailDraft        String // borrador de email listo para copiar
+  modelUsed         String   @default("fallback")
+}
